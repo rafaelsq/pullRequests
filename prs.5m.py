@@ -17,11 +17,11 @@ opener = urllib2.build_opener()
 # 4. cole o resultado abaixo ;)
 opener.addheaders.append(('Cookie', 'COLE OS COOKIES AQUI'))
 
-colors = dict(nop='#660000', ok='#006600', title='#444444', link='#AAAAAA', link_me='#222222')
+colors = dict(nop='#660000', ok='#006600', title='#FFFFFF', link='#666666', link_me='#222222')
 base_url = "https://github.com/"
 projects = ("PalcoMP3", "PalcoMP3FrontEnd", "CifraClubID")
 ignore_labels = ("wip",)
-me = "<USER>"
+me = "rafaelsq"
 
 def fetch(url):
     f = opener.open(base_url + url).read()
@@ -47,7 +47,7 @@ for k, v in ends.iteritems():
     print "%s | color=%s href=%sStudiosol/%s/pulls" % (k, colors['title'], base_url, k)
     if v:
         for (title, href, user) in v:
-            print " %s (@%s) | color=%s href=%s%s" % (title, user, colors['link_me'] if me == user else colors['link'], base_url, href)
+            print "%s (@%s) | color=%s href=%s%s" % (title, user, colors['link_me'] if me == user else colors['link'], base_url, href)
     print "---"
 
 print "Refresh | refresh=true"
