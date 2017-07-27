@@ -31,7 +31,7 @@ def fetch(url):
     out = []
     for r in regs:
         a = r.find("a", class_="h4")
-        out.append((a.get_text().strip(), a.get("href"), r.find("a", class_="muted-link").get_text()))
+        out.append((a.get_text().strip(), a.get("href"), r.find("a", class_="muted-link").get_text(), r.find("a", class_="text-green")))
 
     return out
 
@@ -39,15 +39,24 @@ ends = {}
 count = 0
 for end in projects:
     ends[end] = fetch("StudioSol/%s/pulls" % end)
-    count += len([True for (_, _, user) in ends[end] if user != me])
+    count += len([True for (_, _, user, _) in ends[end] if user != me])
 
 print "PRs %d | color=%s" % (count, colors['nop'] if count > 0 else colors['ok'])
 print "---"
 for k, v in ends.iteritems():
     print "%s | color=%s href=%sStudiosol/%s/pulls" % (k, colors['title'], base_url, k)
     if v:
-        for (title, href, user) in v:
-            print "%s (@%s) | color=%s href=%s%s" % (title, user, colors['link_me'] if me == user else colors['link'], base_url, href)
+        for (title, href, user, ok) in v:
+            color = colors['link']
+            u = " (@%s)" % user
+            if me == user:
+                u = ""
+                if ok:
+                    color = colors['ok']
+                else:
+                    color = colors['link_me'] 
+
+            print "%s%s | color=%s href=%s%s" % (title, u, color, base_url, href)
     print "---"
 
 print "Refresh | refresh=true"
