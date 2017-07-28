@@ -1,27 +1,31 @@
 #!/usr/bin/env PYTHONIOENCODING=UTF-8 /usr/local/bin/python
 # -*- coding: utf-8 -*-
 
-#
-# API completa aqui para plugins em:
-# https://github.com/matryer/bitbar/blob/master/README.md
-#
 
 import urllib2
 from bs4 import BeautifulSoup
-
-opener = urllib2.build_opener()
 
 # 1. no console, digite o script a seguir sem dar enter; ``.split(/\n/g).map(l => l.split(/\s+/g).slice(0, 2).join("=")).join("; ")
 # 2. abre o `application` e vai em cookies; dê ctrl+c em tudo
 # 3. cole o os cookies entre os `` do passo 1 e dê enter.
 # 4. cole o resultado abaixo ;)
-opener.addheaders.append(('Cookie', 'COLE OS COOKIES AQUI'))
+COOKIES = 'MY_COOKIES'
+me = "MY_USER_NAME"
 
-colors = dict(nop='#660000', ok='#006600', title='#FFFFFF', link='#666666', link_me='#222222')
-base_url = "https://github.com/"
 projects = ("PalcoMP3", "PalcoMP3FrontEnd", "CifraClubID")
 ignore_labels = ("wip",)
-me = "rafaelsq"
+owner = 'StudioSol'
+
+colors = dict(nop='#660000', ok='#006600', title='#FFFFFF', link='#666666', link_me='#222222')
+imgs = dict(
+    red='iVBORw0KGgoAAAANSUhEUgAAAAoAAAAQCAYAAAAvf+5AAAAA1klEQVQoU83Ry03DQBRA0TOWsocOUoLpIHTgEhwJR+ycVEDoIOxQzCIdQAekBJfgPhAeNDiJDGLhJW81nzvvcyeYGOEvriJvaMd3YUURqQPtnk1FibJh8QOs6D7IZxzQBeoR0PUsXziGiiNeUxYsw/BgHmkDeSQ2XIc7FhnvkaeGdcnVjG1aV+xShcjNBcTjnu24r9Wwf+i5/Q/geZhxj+dhvntMegJvSU9G8UyX4Hvm/XB+iBQJvAiP7JLcBJ601Rmbz5Ts9IVrtMnd79LIw+BzWkwGvwAVBlT6zNjR1wAAAABJRU5ErkJggg==',
+    green='iVBORw0KGgoAAAANSUhEUgAAAAoAAAAQCAYAAAAvf+5AAAAA2UlEQVQoU83SzW3CQBBA4W8tcU86oASnA9KBSwApRrkZKgjpwLlFOAc6IB2EElyC+4jijbwIYSIOHLOn/Xm7M/N2ghtHuMqVco12fBYsFaJK0NpaK80x15hdgqXOt9zEDp2gGgGd3sKHQ1A6YJ9eYSGkC1NRK8hFUeM+eDKT+RK9aazM3ZnYpHmpThGihzPIq63NRXHLtH7Re/wX4KmYcZKnYlKOg57gM+nJFN51iX021af9nagYwLPwqB7kJvCorZJZ+xmEH79whTa5+xuaXFBfb4ornXIz+AvvblT6LJdT/QAAAABJRU5ErkJggg=='
+)
+base_url = "https://github.com/"
+
+opener = urllib2.build_opener()
+
+opener.addheaders.append(('Cookie', COOKIES))
 
 def fetch(url):
     f = opener.open(base_url + url).read()
@@ -38,13 +42,13 @@ def fetch(url):
 ends = {}
 count = 0
 for end in projects:
-    ends[end] = fetch("StudioSol/%s/pulls" % end)
+    ends[end] = fetch("%s/%s/pulls" % (owner, end))
     count += len([True for (_, _, user, _) in ends[end] if user != me])
 
-print "PRs %d | color=%s" % (count, colors['nop'] if count > 0 else colors['ok'])
+print "%s | color=%s image=%s" % (count if count else '', colors['nop'] if count > 0 else colors['ok'], imgs['red' if count else 'green'])
 print "---"
 for k, v in ends.iteritems():
-    print "%s | color=%s href=%sStudiosol/%s/pulls" % (k, colors['title'], base_url, k)
+    print "%s | color=%s href=%s%s/%s/pulls" % (k, colors['title'], owner, base_url, k)
     if v:
         for (title, href, user, ok) in v:
             color = colors['link']
