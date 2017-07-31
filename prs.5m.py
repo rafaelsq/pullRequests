@@ -48,7 +48,7 @@ for end in projects:
 print "%s | color=%s image=%s" % (count if count else '', colors['nop'] if count > 0 else colors['ok'], imgs['red' if count else 'green'])
 print "---"
 for k, v in ends.iteritems():
-    print "%s | color=%s href=%s%s/%s/pulls" % (k, colors['title'], owner, base_url, k)
+    print "%s | color=%s href=%s%s/%s/pulls" % (k, colors['title'], base_url, owner, k)
     if v:
         for (title, href, user, ok) in v:
             color = colors['link']
