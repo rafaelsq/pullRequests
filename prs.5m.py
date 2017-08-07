@@ -31,11 +31,18 @@ def fetch(url):
     f = opener.open(base_url + url).read()
     s = BeautifulSoup(f, "html.parser")
     lis = s.find_all("li", class_="js-issue-row")
-    regs = [l for l in lis if not l.find_all("a", class_="text-red") and not [x for x in l.find_all("a", class_="label") if x.get_text().lower().strip() in ignore_labels]]
     out = []
-    for r in regs:
+    for r in lis:
         a = r.find("a", class_="h4")
-        out.append((a.get_text().strip(), a.get("href"), r.find("a", class_="muted-link").get_text(), r.find("a", class_="text-green")))
+
+        out.append(dict(
+            title=a.get_text().strip(),
+            href=a.get("href"),
+            green=bool(r.find("a", class_="text-green")),
+            red=bool(r.find("a", class_="text-red")),
+            user=r.find("a", class_="muted-link").get_text(),
+            tags=[x.get_text().lower().strip() for x in r.find_all("a", class_="label")]
+        ))
 
     return out
 
@@ -43,24 +50,28 @@ ends = {}
 count = 0
 for end in projects:
     ends[end] = fetch("%s/%s/pulls" % (owner, end))
-    count += len([True for (_, _, user, _) in ends[end] if user != me])
+    count += len([True for r in ends[end] if r['user'] != me])
 
 print "%s | color=%s image=%s" % (count if count else '', colors['nop'] if count > 0 else colors['ok'], imgs['red' if count else 'green'])
 print "---"
 for k, v in ends.iteritems():
     print "%s | color=%s href=%s%s/%s/pulls" % (k, colors['title'], base_url, owner, k)
     if v:
-        for (title, href, user, ok) in v:
+        for r in v:
             color = colors['link']
-            u = " (@%s)" % user
-            if me == user:
+            u = " (@%s)" % r['user']
+            if me == r['user']:
                 u = ""
-                if ok:
+                if r['green']:
                     color = colors['ok']
+                elif r['red']:
+                    color = colors['nop']
                 else:
                     color = colors['link_me'] 
+            elif r['red'] or set(r['tags']).intersection(ignore_labels):
+                continue
 
-            print "%s%s | color=%s href=%s%s" % (title, u, color, base_url, href)
+            print "%s%s | color=%s href=%s%s" % (r['title'], u, color, base_url, r['href'])
     print "---"
 
 print "Refresh | refresh=true"
