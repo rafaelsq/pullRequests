@@ -9,6 +9,7 @@ github_api_key = 'TOKEN'
 
 me = 'USER'
 ignore_labels = ('WIP',)
+LGTM = True
 owner = 'StudioSol'
 repositories = ('PalcoMP3', 'PalcoMP3FrontEnd', 'CifraClubID')
 colors = dict(nop='#660000', ok='#006600', title='#FFFFFF', link='#666666', link_me='#222222')
@@ -44,6 +45,9 @@ fragment comparisonFields on Repository {
               commit {
                 status {
                   state
+                  context(name: "approvals/lgtm") {
+                    state
+                  }
                 }
               }
             }
@@ -64,6 +68,7 @@ repos = make_github_request("https://api.github.com/graphql", query=query)['data
 
 lines = [u"---"]
 countPRs = 0
+green = True
 for repository, repo in repos.iteritems():
     lines.append(u"%s | color=%s href=%s/pulls" % (repository, colors['title'], repo['url']))
 
@@ -76,10 +81,11 @@ for repository, repo in repos.iteritems():
         if me == pr['node']['author']['login']:
             u = ""
             color = colors['link_me'] 
-            if status and status['state'] == "SUCCESS":
+            if status and status['state'] == "SUCCESS" and LGTM and status['context']:
                 color = colors['ok']
-            elif status and status['state'] in ("FAILURE", "ERROR"):
+            elif (status and status['state'] in ("FAILURE", "ERROR")) or not status['context']:
                 color = colors['nop']
+                green = False
         elif (not status or status['state'] in ("FAILURE", "ERROR")) or set(tags).intersection(ignore_labels):
             continue
 
@@ -89,7 +95,6 @@ for repository, repo in repos.iteritems():
 
 lines.append(u"Refresh | refresh=true")
 
-lines.insert(0, u"%s | color=%s image=%s" % (
-    countPRs if countPRs else '', colors['nop'] if countPRs > 0 else colors['ok'], imgs['red' if countPRs else 'green']))
+lines.insert(0, u"%s | color=%s image=%s" % (countPRs if countPRs else '', colors['ok'] if green else colors['nop'], imgs['green' if green else 'red']))
 
 print u"\n".join(lines)
