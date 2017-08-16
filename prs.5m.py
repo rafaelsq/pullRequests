@@ -10,8 +10,8 @@ github_api_key = 'TOKEN'
 me = 'USER'
 ignore_labels = ('WIP',)
 LGTM = True
-owner = 'StudioSol'
-repositories = ('PalcoMP3', 'PalcoMP3FrontEnd', 'CifraClubID')
+owner = 'rafaelsq'
+repositories = ('pullRequests', )
 colors = dict(nop='#660000', ok='#006600', title='#FFFFFF', link='#666666', link_me='#222222')
 
 imgs = dict(
