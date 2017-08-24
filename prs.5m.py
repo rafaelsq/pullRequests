@@ -9,20 +9,24 @@ github_api_key = 'TOKEN'
 
 me = 'USER'
 ignore_labels = ('WIP',)
-LGTM = True
-owner = 'rafaelsq'
-repositories = ('pullRequests', )
-colors = dict(nop='#660000', ok='#006600', title='#FFFFFF', link='#666666', link_me='#222222')
+
+# to force LGTM(it has a bug); repositories = (('rafaelsq/pullRequests', True), ...)
+repositories = ('rafaelsq/pullRequests', )
+colors = dict(nop='#660000', ok='#006600', title='#FFFFFF', link='#666666', link_me='#222222', wait='#DBAB09')
 
 imgs = dict(
     red='iVBORw0KGgoAAAANSUhEUgAAAAoAAAAQCAYAAAAvf+5AAAAA1klEQVQoU83Ry03DQBRA0TOWsocOUoLpIHTgEhwJR+ycVEDoIOxQzCIdQAekBJfgPhAeNDiJDGLhJW81nzvvcyeYGOEvriJvaMd3YUURqQPtnk1FibJh8QOs6D7IZxzQBeoR0PUsXziGiiNeUxYsw/BgHmkDeSQ2XIc7FhnvkaeGdcnVjG1aV+xShcjNBcTjnu24r9Wwf+i5/Q/geZhxj+dhvntMegJvSU9G8UyX4Hvm/XB+iBQJvAiP7JLcBJ601Rmbz5Ts9IVrtMnd79LIw+BzWkwGvwAVBlT6zNjR1wAAAABJRU5ErkJggg==',
     green='iVBORw0KGgoAAAANSUhEUgAAAAoAAAAQCAYAAAAvf+5AAAAA2UlEQVQoU83SzW3CQBBA4W8tcU86oASnA9KBSwApRrkZKgjpwLlFOAc6IB2EElyC+4jijbwIYSIOHLOn/Xm7M/N2ghtHuMqVco12fBYsFaJK0NpaK80x15hdgqXOt9zEDp2gGgGd3sKHQ1A6YJ9eYSGkC1NRK8hFUeM+eDKT+RK9aazM3ZnYpHmpThGihzPIq63NRXHLtH7Re/wX4KmYcZKnYlKOg57gM+nJFN51iX021af9nagYwLPwqB7kJvCorZJZ+xmEH79whTa5+xuaXFBfb4ornXIz+AvvblT6LJdT/QAAAABJRU5ErkJggg=='
 )
 
+reps = dict([(r, False) if not isinstance(r, tuple) else r for r in repositories])
 query = '''
 {%s}
 
 fragment comparisonFields on Repository {
+  owner {
+    login
+  }
   url
   pullRequests(last: 100, states: OPEN) {
     edges {
@@ -57,7 +61,8 @@ fragment comparisonFields on Repository {
     }
   }
 }
-''' % (' '.join(['%s: repository(owner: "%s", name: "%s") { ...comparisonFields }' % (repository, owner, repository) for repository in repositories]), )
+''' % (' '.join(['%s: repository(owner: "%s", name: "%s") { ...comparisonFields }' % (
+    (repository.split("/")[1], ) + tuple(repository.split("/"))) for repository in reps.keys()]), )
 
 def make_github_request(url, query):
     request = urllib2.Request(url, headers={'Authorization': 'token ' + github_api_key})
@@ -68,33 +73,45 @@ repos = make_github_request("https://api.github.com/graphql", query=query)['data
 
 lines = [u"---"]
 countPRs = 0
-green = True
+showGreenIco = False
+showRedIco = False
 for repository, repo in repos.iteritems():
     lines.append(u"%s | color=%s href=%s/pulls" % (repository, colors['title'], repo['url']))
+    own = repo['owner']['login'] + '/' + repository
 
     for pr in repo['pullRequests']['edges']:
         color = colors['link']
         u = u" (@%s)" % pr['node']['author']['login']
         status = pr['node']['commits']['edges'][0]['node']['commit']['status']
         tags = [l['node']['name'] for l in pr['node']['labels']['edges']]
+        ico = False
 
         if me == pr['node']['author']['login']:
             u = ""
             color = colors['link_me'] 
-            if status and status['state'] == "SUCCESS" and LGTM and status['context']:
+            if status and status['state'] == "SUCCESS":
                 color = colors['ok']
+                ico = reps[own] and status['context']
+                if not ico:
+                    color = colors['wait']
+                showGreenIco = True
             elif (status and status['state'] in ("FAILURE", "ERROR")) or not status['context']:
                 color = colors['nop']
-                green = False
+                showRedIco = True
         elif (not status or status['state'] in ("FAILURE", "ERROR")) or set(tags).intersection(ignore_labels):
             continue
+        elif status and status['state'] == "SUCCESS":
+            ico = reps[own] and status['context']
 
         countPRs += 1
-        lines.append(u"%s%s | color=%s href=%s" % (pr['node']['title'], u, color, pr['node']['url']))
+        lines.append(u"%s%s | color=%s href=%s image=%s" % (pr['node']['title'].replace("|", " "), u, color, pr['node']['url'], imgs['green'] if ico else ''))
     lines.append(u"---")
 
 lines.append(u"Refresh | refresh=true")
 
-lines.insert(0, u"%s | color=%s image=%s" % (countPRs if countPRs else '', colors['ok'] if green else colors['nop'], imgs['green' if green else 'red']))
+if showRedIco or showGreenIco:
+    lines.insert(0, u"%s | color=%s image=%s" % (countPRs, colors['ok'] if showGreenIco else colors['nop'], imgs['green' if showGreenIco else 'red']))
+else:
+    lines.insert(0, u"PRs %s | color=%s image=" % (countPRs, colors['ok']))
 
 print u"\n".join(lines)
