@@ -28,6 +28,7 @@ fragment comparisonFields on Repository {
     login
   }
   url
+
   pullRequests(last: 100, states: OPEN) {
     edges {
       node {
@@ -43,6 +44,7 @@ fragment comparisonFields on Repository {
             }
           }
         }
+        mergeable
         commits(last: 1) {
           edges {
             node {
@@ -86,6 +88,7 @@ for repository, repo in repos.iteritems():
         tags = [l['node']['name'] for l in pr['node']['labels']['edges']]
         ico = False
 
+        pr['node']['title'] = [':broken_heart: ', ''][pr['node']['mergeable'] == "MERGEABLE"] + pr['node']['title']
         if me == pr['node']['author']['login']:
             u = ""
             color = colors['link_me'] 
@@ -95,7 +98,7 @@ for repository, repo in repos.iteritems():
                 if not ico:
                     color = colors['wait']
                 showGreenIco = True
-            elif (status and status['state'] in ("FAILURE", "ERROR")) or not status['context']:
+            elif (status and status['state'] in ("FAILURE", "ERROR")) or not status or not status['context']:
                 color = colors['nop']
                 showRedIco = True
         elif (not status or status['state'] in ("FAILURE", "ERROR")) or set(tags).intersection(ignore_labels):
@@ -110,7 +113,7 @@ for repository, repo in repos.iteritems():
 lines.append(u"Refresh | refresh=true")
 
 if showRedIco or showGreenIco:
-    lines.insert(0, u"%s | color=%s image=%s" % (countPRs, colors['ok'] if showGreenIco else colors['nop'], imgs['green' if showGreenIco else 'red']))
+    lines.insert(0, u"%s | color=%s image=%s" % (countPRs, colors['nop'] if showRedIco else colors['ok'], imgs['red' if showRedIco else 'green']))
 else:
     lines.insert(0, u"PRs %s | color=%s image=" % (countPRs, colors['ok']))
 
