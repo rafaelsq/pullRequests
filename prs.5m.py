@@ -1,8 +1,19 @@
 #!/usr/bin/env PYTHONIOENCODING=UTF-8 python
 # -*- coding: utf-8 -*-
 
+# <bitbar.title>GitHub Pull Requests</bitbar.title>
+# <bitbar.version>v1.0</bitbar.version>
+# <bitbar.author>Rafael Quintela</bitbar.author>
+# <bitbar.author.github>rafaelsq</bitbar.author.github>
+# <bitbar.desc>Show github pull requests for the projects you follow</bitbar.desc>
+# <bitbar.image></bitbar.image>
+# <bitbar.dependencies>python</bitbar.dependencies>
+# <bitbar.abouturl></bitbar.abouturl>
+
+import re
 import json
 import urllib2
+
 
 # https://github.com/settings/tokens with 'repo' perms
 github_api_key = 'TOKEN'
@@ -45,6 +56,13 @@ fragment comparisonFields on Repository {
           }
         }
         mergeable
+        comments(first: 100) {
+            edges {
+                node {
+                    bodyText
+                }
+            }
+        }
         commits(last: 1) {
           edges {
             node {
@@ -77,6 +95,7 @@ lines = [u"---"]
 countPRs = 0
 showGreenIco = False
 showRedIco = False
+LGTM = re.compile(r'(^|\s|[,\.])lgtm($|\s|[,\.])', re.I)
 for repository, repo in repos.iteritems():
     lines.append(u"%s | color=%s href=%s/pulls" % (repository, colors['title'], repo['url']))
     own = repo['owner']['login'] + '/' + repository
@@ -88,26 +107,34 @@ for repository, repo in repos.iteritems():
         tags = [l['node']['name'] for l in pr['node']['labels']['edges']]
         ico = False
 
-        pr['node']['title'] = [':broken_heart: ', ''][pr['node']['mergeable'] == "MERGEABLE"] + pr['node']['title']
+        brokenHeart = [':broken_heart: ', ''][pr['node']['mergeable'] == "MERGEABLE"]
+        lgtm = 0
+        if reps[own]:
+            for msg in pr['node']['comments']['edges']:
+                if LGTM.search(msg['node']['bodyText']):
+                    lgtm += 1
         if me == pr['node']['author']['login']:
             u = ""
-            color = colors['link_me'] 
+            color = colors['link_me']
             if status and status['state'] == "SUCCESS":
                 color = colors['ok']
-                ico = reps[own] and status['context']
-                if not ico:
+                if lgtm < 2:
                     color = colors['wait']
                 showGreenIco = True
             elif (status and status['state'] in ("FAILURE", "ERROR")) or not status or not status['context']:
                 color = colors['nop']
                 showRedIco = True
+
+            if brokenHeart:
+                color = colors['nop']
+                showRedIco = True
         elif (not status or status['state'] in ("FAILURE", "ERROR")) or set(tags).intersection(ignore_labels):
             continue
-        elif status and status['state'] == "SUCCESS":
-            ico = reps[own] and status['context']
+        elif status and status['state'] == "SUCCESS" and lgtm > 1:
+            ico = True
 
         countPRs += 1
-        lines.append(u"%s%s | color=%s href=%s image=%s" % (pr['node']['title'].replace("|", " "), u, color, pr['node']['url'], imgs['green'] if ico else ''))
+        lines.append(u"%s%s%s | color=%s href=%s image=%s" % (brokenHeart, pr['node']['title'].replace("|", " "), u, color, pr['node']['url'], imgs['green'] if ico else ''))
     lines.append(u"---")
 
 lines.append(u"Refresh | refresh=true")
