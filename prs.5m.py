@@ -23,11 +23,12 @@ ignore_labels = ('WIP',)
 
 # to force LGTM(it has a bug); repositories = (('rafaelsq/pullRequests', True), ...)
 repositories = ('rafaelsq/pullRequests', )
-colors = dict(nop='#660000', ok='#006600', title='#FFFFFF', link='#666666', link_me='#222222', wait='#DBAB09')
+colors = dict(nop='#660000', ok='#006600', normal='#666666', title='#FFFFFF', link='#666666', link_me='#222222', wait='#DBAB09')
 
 imgs = dict(
     red='iVBORw0KGgoAAAANSUhEUgAAAAoAAAAQCAYAAAAvf+5AAAAA1klEQVQoU83Ry03DQBRA0TOWsocOUoLpIHTgEhwJR+ycVEDoIOxQzCIdQAekBJfgPhAeNDiJDGLhJW81nzvvcyeYGOEvriJvaMd3YUURqQPtnk1FibJh8QOs6D7IZxzQBeoR0PUsXziGiiNeUxYsw/BgHmkDeSQ2XIc7FhnvkaeGdcnVjG1aV+xShcjNBcTjnu24r9Wwf+i5/Q/geZhxj+dhvntMegJvSU9G8UyX4Hvm/XB+iBQJvAiP7JLcBJ601Rmbz5Ts9IVrtMnd79LIw+BzWkwGvwAVBlT6zNjR1wAAAABJRU5ErkJggg==',
-    green='iVBORw0KGgoAAAANSUhEUgAAAAoAAAAQCAYAAAAvf+5AAAAA2UlEQVQoU83SzW3CQBBA4W8tcU86oASnA9KBSwApRrkZKgjpwLlFOAc6IB2EElyC+4jijbwIYSIOHLOn/Xm7M/N2ghtHuMqVco12fBYsFaJK0NpaK80x15hdgqXOt9zEDp2gGgGd3sKHQ1A6YJ9eYSGkC1NRK8hFUeM+eDKT+RK9aazM3ZnYpHmpThGihzPIq63NRXHLtH7Re/wX4KmYcZKnYlKOg57gM+nJFN51iX021af9nagYwLPwqB7kJvCorZJZ+xmEH79whTa5+xuaXFBfb4ornXIz+AvvblT6LJdT/QAAAABJRU5ErkJggg=='
+    green='iVBORw0KGgoAAAANSUhEUgAAAAoAAAAQCAYAAAAvf+5AAAAA2UlEQVQoU83SzW3CQBBA4W8tcU86oASnA9KBSwApRrkZKgjpwLlFOAc6IB2EElyC+4jijbwIYSIOHLOn/Xm7M/N2ghtHuMqVco12fBYsFaJK0NpaK80x15hdgqXOt9zEDp2gGgGd3sKHQ1A6YJ9eYSGkC1NRK8hFUeM+eDKT+RK9aazM3ZnYpHmpThGihzPIq63NRXHLtH7Re/wX4KmYcZKnYlKOg57gM+nJFN51iX021af9nagYwLPwqB7kJvCorZJZ+xmEH79whTa5+xuaXFBfb4ornXIz+AvvblT6LJdT/QAAAABJRU5ErkJggg==',
+    grey='iVBORw0KGgoAAAANSUhEUgAAAAgAAAAOCAYAAAASVl2WAAAA6UlEQVQoU62QPUoEQRCF3+vIxNDIA4gXMDDSSFNBNh5humaEFTQxWMFcIwMVpoeRwcyfAxgIxh5B8BATCtL9pIU12A02scKqj3o/xILh7L0oiqW+77+me5pZCWDbOXeaUloGMA4hjP8A7/07yUNJ5wA2Sa4A+JZ0PwxDlT88SlqTdOKc25e0DuCa5LOkDXrvRyQfQgi/fqqq2m2a5sXMBGA0B0y1/xEws0tJeyQnIYSnLFGW5ZZz7krSR07xCuBMUt227UEGzOyW5F1K6Sab3CF5HGM86rruMwN1Xa/GGC8kvc1VPVv9QuAH2FB08Dh1TaoAAAAASUVORK5CYII='
 )
 
 reps = dict([(r, False) if not isinstance(r, tuple) else r for r in repositories])
@@ -121,7 +122,7 @@ for repository, repo in repos.iteritems():
                 if lgtm < 2:
                     color = colors['wait']
                 showGreenIco = True
-            elif (status and status['state'] in ("FAILURE", "ERROR")) or not status or not status['context']:
+            elif (status and status['state'] in ("FAILURE", "ERROR")) or (status and not status['context']):
                 color = colors['nop']
                 showRedIco = True
 
@@ -142,6 +143,6 @@ lines.append(u"Refresh | refresh=true")
 if showRedIco or showGreenIco:
     lines.insert(0, u"%s | color=%s image=%s" % (countPRs, colors['nop'] if showRedIco else colors['ok'], imgs['red' if showRedIco else 'green']))
 else:
-    lines.insert(0, u"PRs %s | color=%s image=" % (countPRs, colors['ok']))
+    lines.insert(0, u"| color=%s image=%s" % (colors['normal'], imgs['grey']))
 
 print u"\n".join(lines)
