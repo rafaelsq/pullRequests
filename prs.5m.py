@@ -21,7 +21,7 @@ github_api_key = 'TOKEN'
 me = 'USER'
 ignore_labels = ('WIP',)
 
-# to force LGTM(it has a bug); repositories = (('rafaelsq/pullRequests', True), ...)
+# to use github Approvals; repositories = (('rafaelsq/pullRequests', True), ...)
 repositories = ('rafaelsq/pullRequests', )
 colors = dict(nop='#660000', ok='#006600', normal='#666666', title='#FFFFFF', link='#666666', link_me='#222222', wait='#DBAB09')
 
@@ -57,10 +57,10 @@ fragment comparisonFields on Repository {
           }
         }
         mergeable
-        comments(first: 100) {
+        reviews(first:10, states:APPROVED) {
             edges {
                 node {
-                    bodyText
+                    state
                 }
             }
         }
@@ -70,9 +70,6 @@ fragment comparisonFields on Repository {
               commit {
                 status {
                   state
-                  context(name: "approvals/lgtm") {
-                    state
-                  }
                 }
               }
             }
@@ -96,7 +93,6 @@ lines = [u"---"]
 countPRs = 0
 showGreenIco = False
 showRedIco = False
-LGTM = re.compile(r'(^|\s|[,\.])lgtm($|\s|[,\.])', re.I)
 for repository, repo in repos.iteritems():
     lines.append(u"%s | color=%s href=%s/pulls" % (repository, colors['title'], repo['url']))
     own = repo['owner']['login'] + '/' + repository
@@ -109,17 +105,13 @@ for repository, repo in repos.iteritems():
         ico = False
 
         brokenHeart = [':broken_heart: ', ''][pr['node']['mergeable'] == "MERGEABLE"]
-        lgtm = 0
-        if reps[own]:
-            for msg in pr['node']['comments']['edges']:
-                if LGTM.search(msg['node']['bodyText']):
-                    lgtm += 1
+        approvals = len(pr['node']['reviews']['edges'])
         if me == pr['node']['author']['login']:
             u = ""
             color = colors['link_me']
             if status and status['state'] == "SUCCESS":
                 color = colors['ok']
-                if lgtm < 2:
+                if approvals < 2:
                     color = colors['wait']
                 showGreenIco = True
             elif (status and status['state'] in ("FAILURE", "ERROR")) or (status and not status['context']):
@@ -131,7 +123,7 @@ for repository, repo in repos.iteritems():
                 showRedIco = True
         elif (not status or status['state'] in ("FAILURE", "ERROR")) or set(tags).intersection(ignore_labels):
             continue
-        elif status and status['state'] == "SUCCESS" and lgtm > 1:
+        elif status and status['state'] == "SUCCESS" and approvals > 1:
             ico = True
 
         countPRs += 1
