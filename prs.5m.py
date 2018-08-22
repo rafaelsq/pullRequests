@@ -118,6 +118,7 @@ for repository, repo in repos.iteritems():
                 elif approvals > 1:
                     countPRsApproved += 1
                     showGreenIco = True
+                    ico = True
             elif (status and status['state'] in ("FAILURE", "ERROR")) or (status and not status['context']):
                 color = colors['nop']
                 showRedIco = True
@@ -136,10 +137,10 @@ for repository, repo in repos.iteritems():
 lines.append(u"Refresh | refresh=true")
 
 lines.insert(0, u"%s%d| color=%s image=%s" % (
-    countPRsApproved + "/" if countPRsApproved else "",
+    ("%d/" % countPRsApproved) if countPRsApproved else "",
     countPRs or "",
     colors['nop'] if showRedIco else (colors['ok'] if showGreenIco else colors['normal']),
-    imgs['red']  if showRedIco else (imgs['gree'] if showGreenIco else imgs['grey']),
+    imgs['red']  if showRedIco else (imgs['green'] if showGreenIco else imgs['grey']),
 ))
 
 print u"\n".join(lines)
