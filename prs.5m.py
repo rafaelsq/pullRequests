@@ -119,7 +119,7 @@ for repository, repo in repos.iteritems():
                     countPRsApproved += 1
                     showGreenIco = True
                     ico = True
-            elif (status and status['state'] in ("FAILURE", "ERROR")) or (status and not status['context']):
+            elif (status and status['state'] in ("FAILURE", "ERROR")) or (status and not status.get('context')):
                 color = colors['nop']
                 showRedIco = True
 
