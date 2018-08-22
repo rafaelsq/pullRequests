@@ -91,6 +91,7 @@ repos = make_github_request("https://api.github.com/graphql", query=query)['data
 
 lines = [u"---"]
 countPRs = 0
+countPRsApproved = 0
 showGreenIco = False
 showRedIco = False
 for repository, repo in repos.iteritems():
@@ -107,13 +108,16 @@ for repository, repo in repos.iteritems():
         brokenHeart = [':broken_heart: ', ''][pr['node']['mergeable'] == "MERGEABLE"]
         approvals = len(pr['node']['reviews']['edges'])
         if me == pr['node']['author']['login']:
+            countPRs += 1
             u = ""
             color = colors['link_me']
             if status and status['state'] == "SUCCESS":
                 color = colors['ok']
                 if approvals < 2:
                     color = colors['wait']
-                showGreenIco = True
+                elif approval > 1:
+                    countPRsApproved += 1
+                    showGreenIco = True
             elif (status and status['state'] in ("FAILURE", "ERROR")) or (status and not status['context']):
                 color = colors['nop']
                 showRedIco = True
@@ -126,15 +130,16 @@ for repository, repo in repos.iteritems():
         elif status and status['state'] == "SUCCESS" and approvals > 1:
             ico = True
 
-        countPRs += 1
         lines.append(u"%s%s%s | color=%s href=%s image=%s" % (brokenHeart, pr['node']['title'].replace("|", " "), u, color, pr['node']['url'], imgs['green'] if ico else ''))
     lines.append(u"---")
 
 lines.append(u"Refresh | refresh=true")
 
-if showRedIco or showGreenIco:
-    lines.insert(0, u"%s | color=%s image=%s" % (countPRs, colors['nop'] if showRedIco else colors['ok'], imgs['red' if showRedIco else 'green']))
-else:
-    lines.insert(0, u"| color=%s image=%s" % (colors['normal'], imgs['grey']))
+lines.insert(0, u"%s%d| color=%s image=%s" % (
+    countPRsApproved + "/" if countPRsApproved else "",
+    countPRs or "",
+    colors['nop'] if showRedIco else (colors['ok'] if showGreenIco else colors['normal']),
+    imgs['red']  if showRedIco else (imgs['gree'] if showGreenIco else imgs['grey']),
+))
 
 print u"\n".join(lines)
