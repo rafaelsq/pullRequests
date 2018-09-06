@@ -136,9 +136,9 @@ for repository, repo in repos.iteritems():
 
 lines.append(u"Refresh | refresh=true")
 
-lines.insert(0, u"%s%d| color=%s image=%s" % (
+lines.insert(0, u"%s%s| color=%s image=%s" % (
     ("%d/" % countPRsApproved) if countPRsApproved else "",
-    countPRs or "",
+    str(countPRs or ""),
     colors['nop'] if showRedIco else (colors['ok'] if showGreenIco else colors['normal']),
     imgs['red']  if showRedIco else (imgs['green'] if showGreenIco else imgs['grey']),
 ))
